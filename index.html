@@ -45,10 +45,16 @@
             
             /* Browser Mobile Fix */
             #browser-stage {
-                width: 100% !important;
-                height: 100% !important;
+                position: fixed !important;
+                width: 100vw !important;
+                height: 100vh !important;
                 top: 0 !important;
                 left: 0 !important;
+                margin: 0 !important;
+                max-width: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                z-index: 10000 !important;
             }
         }
 
@@ -193,6 +199,15 @@
         #browser-stage {
             z-index: 10000 !important;
         }
+
+        /* --- AI CHAT SPECIFIC --- */
+        .msg-bubble { padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; max-width: 90%; word-wrap: break-word; font-size: 11px; line-height: 1.4; }
+        .msg-user { align-self: flex-end; background: var(--primary); color: #000; border: 1px solid var(--primary); }
+        .msg-ai { align-self: flex-start; background: rgba(0, 255, 255, 0.1); border: 1px solid var(--primary); color: var(--primary); }
+        .typing-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background-color: var(--primary); margin: 0 1px; animation: bounce 1.4s infinite ease-in-out; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
     </style>
 </head>
@@ -371,6 +386,25 @@
 
             </div>
         </div>
+
+        <!-- Win 5: AI CHAT -->
+        <div id="win-ai" class="window-panel w-[350px] hidden-el" style="top: 150px; left: 150px; height: 400px; z-index: 55;">
+            <div id="win-ai-header" class="window-header">
+                <span><i class="fas fa-brain mr-2"></i>NEURAL_LINK // AI_CORE</span>
+                <div class="flex gap-1">
+                    <button onclick="closeAI()" class="text-[10px] hover:text-white px-2">X</button>
+                </div>
+            </div>
+            <div class="window-content flex flex-col h-full p-0">
+                <div id="ai-chat-display" class="flex-1 p-4 overflow-y-auto flex flex-col font-mono text-xs scrollbar-thin">
+                    <div class="text-[var(--primary)] opacity-50 mb-4">> Neural Link established. Awaiting input sequences...</div>
+                </div>
+                <div class="p-2 border-t border-[var(--primary)] bg-black/50 flex gap-2">
+                    <input type="text" id="ai-input" class="flex-1 bg-transparent border border-gray-800 text-[var(--primary)] text-xs p-2 focus:outline-none focus:border-[var(--primary)] font-mono placeholder-gray-700" placeholder="Enter query sequence..." autocomplete="off" onkeypress="if(event.key==='Enter') sendAIQuery()">
+                    <button onclick="sendAIQuery()" class="cyber-btn px-3 text-xs font-bold flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- BROWSER STAGE (Converted to Window) -->
@@ -428,6 +462,7 @@
         // --- GLOBALS ---
         let systemPin = "340";
         let portalPin = "999";
+        const apiKey = ""; // API key is handled by the environment
         
         let files = [
             { icon: 'fa-file-pdf', color: 'text-red-400', name: 'PLANS_V2.pdf' },
@@ -435,7 +470,8 @@
             { icon: 'fa-file-code', color: 'text-yellow-400', name: 'VIRUS.exe' },
             { icon: 'fa-database', color: 'text-green-400', name: 'users.db' },
             { icon: 'fa-database', color: 'text-orange-400', name: 'img.db' },
-            { icon: 'fa-address-book', color: 'text-blue-400', name: 'call.db' }
+            { icon: 'fa-address-book', color: 'text-blue-400', name: 'call.db' },
+            { icon: 'fa-brain', color: 'text-pink-400', name: 'AI_CORE.exe' }
         ];
 
         // --- AUDIO ---
@@ -568,37 +604,12 @@
             browser.style.opacity = '0'; browser.style.transform = 'scale(0.95)';
             requestAnimationFrame(() => { browser.style.transition = 'all 0.3s ease-out'; browser.style.opacity = '1'; browser.style.transform = 'scale(1)'; });
         }
-        function openInternalBrowser(htmlContent) {
-            const browser = document.getElementById('browser-stage'), frame = document.getElementById('browser-frame'), urlDisplay = document.getElementById('browser-url');
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'contact-pro-74f93';
-            const injection = `<script>const __app_id = "${appId}";<\/script>`;
-            
-            // Inject Cyber Theme CSS to override white background
-            const darkTheme = `<style>
-                body { background: transparent !important; color: #00f3ff !important; font-family: "Share Tech Mono", monospace !important; }
-                .glass-header { background: rgba(0, 20, 30, 0.9) !important; border-bottom: 1px solid #00f3ff !important; backdrop-filter: none !important; }
-                .contact-card { background: rgba(0, 10, 20, 0.8) !important; border: 1px solid #00f3ff !important; box-shadow: 0 0 10px rgba(0,243,255,0.1) !important; color: #00f3ff !important; }
-                .text-brand-950, .text-brand-900, .text-gray-900, .text-gray-500, h3, h2, p, span { color: #00f3ff !important; }
-                .text-brand-600 { color: #bc13fe !important; }
-                .bg-brand-50, .bg-brand-600, .bg-white { background: rgba(0, 10, 20, 0.95) !important; border-color: #00f3ff !important; }
-                input { background: rgba(0,0,0,0.5) !important; border: 1px solid #00f3ff !important; color: #fff !important; }
-                button { border: 1px solid #00f3ff !important; }
-                .shadow-lg { box-shadow: none !important; }
-            </style>`;
-            
-            frame.srcdoc = injection + darkTheme + htmlContent;
-            urlDisplay.innerText = "LOCAL_DB::CONTACT_SAVER_PRO";
-            browser.classList.remove('hidden-el');
-            browser.style.opacity = '0'; browser.style.transform = 'scale(0.95)';
-            requestAnimationFrame(() => { browser.style.transition = 'all 0.3s ease-out'; browser.style.opacity = '1'; browser.style.transform = 'scale(1)'; });
-        }
         function closeBrowser() {
             const browser = document.getElementById('browser-stage'), frame = document.getElementById('browser-frame');
             browser.style.opacity = '0'; browser.style.transform = 'scale(0.95)';
             setTimeout(() => { 
                 browser.classList.add('hidden-el'); 
                 frame.src = ''; 
-                frame.removeAttribute('srcdoc'); 
                 // Restore Decryption window when browser closes
                 document.getElementById('win-game').classList.remove('hidden-el');
             }, 300);
@@ -616,6 +627,10 @@
             else if (file.name === 'SECRET_PAYLOAD.script') {
                 playBeep(1200, 'sine', 0.1);
                 openConfigModal();
+            }
+            else if (file.name === 'AI_CORE.exe') {
+                playBeep(1200, 'sine', 0.1);
+                openAIWindow();
             }
             else {
                 playError(); const term = document.getElementById('term-output'); const div = document.createElement('div');
@@ -836,6 +851,7 @@
         }
         makeDraggable(document.getElementById("win-sys")); makeDraggable(document.getElementById("win-files"));
         makeDraggable(document.getElementById("win-term")); makeDraggable(document.getElementById("win-game"));
+        makeDraggable(document.getElementById("win-ai"));
         // browser-stage dragging disabled for full screen experience
 
         const termInput = document.getElementById('term-input'), termOutput = document.getElementById('term-output');
@@ -862,6 +878,90 @@
         }
         
         function logout() { location.reload(); }
+
+        // --- AI CHAT LOGIC ---
+        function openAIWindow() {
+            const aiWin = document.getElementById('win-ai');
+            aiWin.classList.remove('hidden-el');
+            aiWin.style.zIndex = 60;
+            setTimeout(() => document.getElementById('ai-input').focus(), 100);
+        }
+
+        function closeAI() {
+            document.getElementById('win-ai').classList.add('hidden-el');
+        }
+
+        async function sendAIQuery() {
+            const input = document.getElementById('ai-input');
+            const display = document.getElementById('ai-chat-display');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            // Add user message
+            addMessageToChat('USER', text);
+            input.value = '';
+            
+            // Add loading indicator
+            const loadingId = 'loading-' + Date.now();
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = loadingId;
+            loadingDiv.className = 'msg-bubble msg-ai';
+            loadingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+            display.appendChild(loadingDiv);
+            display.scrollTop = display.scrollHeight;
+
+            try {
+                const responseText = await generateGeminiContent(text);
+                document.getElementById(loadingId).remove();
+                addMessageToChat('AI', responseText);
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                addMessageToChat('SYS', 'CONNECTION ERROR: NEURAL LINK FAILED');
+            }
+        }
+
+        function addMessageToChat(sender, text) {
+            const display = document.getElementById('ai-chat-display');
+            const div = document.createElement('div');
+            
+            let typeClass = 'msg-ai';
+            if (sender === 'USER') typeClass = 'msg-user';
+            
+            div.className = `msg-bubble ${typeClass} status-animate`;
+            div.innerText = text; // Safe text
+            
+            display.appendChild(div);
+            display.scrollTop = display.scrollHeight;
+            playBeep(800, 'sine', 0.05, 0.05);
+        }
+
+        async function generateGeminiContent(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }] };
+            
+            // Exponential backoff retry logic
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "NO DATA RECEIVED.";
+                    
+                } catch (e) {
+                    if (i === 4) throw e;
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        }
     </script>
 </body>
 </html>
