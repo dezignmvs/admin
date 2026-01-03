@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEURAL OS v9.9</title>
+    <title>NEURAL OS v10.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -43,17 +43,12 @@
             .window-content { max-height: 250px; }
             .taskbar-hide-mobile { display: none; }
             
-            /* Browser Mobile Fix */
             #browser-stage {
                 position: fixed !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                top: 0 !important;
-                left: 0 !important;
-                margin: 0 !important;
-                max-width: none !important;
-                border: none !important;
-                border-radius: 0 !important;
+                width: 100vw !important; height: 100vh !important;
+                top: 0 !important; left: 0 !important;
+                margin: 0 !important; max-width: none !important;
+                border: none !important; border-radius: 0 !important;
                 z-index: 10000 !important;
             }
         }
@@ -104,7 +99,7 @@
         /* --- TERMINAL --- */
         .terminal-text { font-family: 'VT323', monospace; font-size: 1.1rem; color: var(--primary); line-height: 1.2; }
 
-        /* --- BIOMETRIC --- */
+        /* --- FINGERPRINT (FALLBACK) --- */
         .fingerprint-container {
             position: relative; width: 80px; height: 80px; margin: 0 auto 20px;
             cursor: pointer; transition: transform 0.2s;
@@ -120,6 +115,34 @@
         .scanning .scan-beam { opacity: 1; animation: scanMove 1.5s ease-in-out infinite; }
         .scanning .fingerprint-icon { color: var(--primary); text-shadow: 0 0 15px var(--primary); }
         @keyframes scanMove { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+
+        /* --- FACE SCAN (PRIMARY) --- */
+        #face-feed-container {
+            position: relative; width: 280px; height: 200px; margin: 0 auto 20px;
+            border: 1px solid var(--primary); overflow: hidden; background: #000;
+            display: none; /* Hidden by default */
+        }
+        #webcam-video {
+            width: 100%; height: 100%; object-fit: cover;
+            transform: scaleX(-1); /* Mirror */
+            filter: grayscale(100%) sepia(100%) hue-rotate(130deg) brightness(0.8) contrast(1.2);
+            opacity: 0.8;
+        }
+        .face-hud-corner {
+            position: absolute; width: 20px; height: 20px;
+            border: 2px solid var(--primary); z-index: 10;
+        }
+        .tl { top: 5px; left: 5px; border-bottom: none; border-right: none; }
+        .tr { top: 5px; right: 5px; border-bottom: none; border-left: none; }
+        .bl { bottom: 5px; left: 5px; border-top: none; border-right: none; }
+        .br { bottom: 5px; right: 5px; border-top: none; border-left: none; }
+        
+        .face-scan-line {
+            position: absolute; width: 100%; height: 2px; background: var(--primary);
+            box-shadow: 0 0 10px var(--primary); top: 0; left: 0; z-index: 11;
+            animation: faceScan 2s linear infinite;
+        }
+        @keyframes faceScan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
         /* --- KEYPAD --- */
         .cyber-btn {
@@ -139,75 +162,212 @@
         ::-webkit-scrollbar-track { background: #000; }
 
         /* --- SCANNER BUTTON --- */
-        .scanner-btn {
-            position: relative;
-            overflow: hidden;
-        }
+        .scanner-btn { position: relative; overflow: hidden; }
         .scanner-btn::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
             transform: skewX(-25deg);
         }
-        .scanner-btn.scanning::after {
-            animation: scanBtn 1s linear infinite;
-        }
-        @keyframes scanBtn {
-            0% { left: -100%; }
-            100% { left: 200%; }
-        }
+        .scanner-btn.scanning::after { animation: scanBtn 1s linear infinite; }
+        @keyframes scanBtn { 0% { left: -100%; } 100% { left: 200%; } }
 
         /* --- SMOOTH ANIMATIONS --- */
         #password-modal {
-            transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
-            opacity: 0;
-            pointer-events: none;
+            transition: opacity 0.3s ease, backdrop-filter 0.3s ease; opacity: 0; pointer-events: none;
         }
-        #password-modal.modal-visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        #password-modal.modal-visible { opacity: 1; pointer-events: auto; }
         #password-modal .window-panel {
-            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-            transform: scale(0.9) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1); transform: scale(0.9) translateY(20px);
         }
-        #password-modal.modal-visible .window-panel {
-            transform: scale(1) translateY(0);
-        }
-        @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.8); filter: blur(4px); }
-            100% { opacity: 1; transform: scale(1); filter: blur(0); }
-        }
-        .file-item {
-            opacity: 0;
-            animation: popIn 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
-        }
-        @keyframes slideUpFade {
-            0% { opacity: 0; transform: translateY(5px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        .status-animate {
-            animation: slideUpFade 0.3s ease-out forwards;
-        }
+        #password-modal.modal-visible .window-panel { transform: scale(1) translateY(0); }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); filter: blur(4px); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
+        .file-item { opacity: 0; animation: popIn 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+        @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(5px); } 100% { opacity: 1; transform: translateY(0); } }
+        .status-animate { animation: slideUpFade 0.3s ease-out forwards; }
 
         /* --- BROWSER OVERLAY FIX --- */
-        /* Z-index 10000 ensures it sits ABOVE the CRT overlay (z-index 9999) */
-        #browser-stage {
-            z-index: 10000 !important;
-        }
+        #browser-stage { z-index: 10000 !important; }
 
         /* --- AI CHAT SPECIFIC --- */
         .msg-bubble { padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; max-width: 90%; word-wrap: break-word; font-size: 11px; line-height: 1.4; }
         .msg-user { align-self: flex-end; background: var(--primary); color: #000; border: 1px solid var(--primary); }
-        .msg-ai { align-self: flex-start; background: rgba(0, 255, 255, 0.1); border: 1px solid var(--primary); color: var(--primary); }
+        .msg-ai { align-self: flex-start; background: rgba(0, 255, 255, 0.1); border: 1px solid var(--primary); color: var(--primary); transition: background-color 0.2s; }
         .typing-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background-color: var(--primary); margin: 0 1px; animation: bounce 1.4s infinite ease-in-out; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* --- NEW BUTTON EFFECT (Adapted for Neural OS) --- */
+        .design-btn-wrapper {
+            --dot-size: 4px;
+            --line-weight: 1px;
+            --line-distance: 0.9rem 1.1rem;
+            --animation-speed: 0.35s;
+            --dot-color: var(--primary);
+            --line-color: rgba(0, 243, 255, 0.5);
+
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: auto;
+            height: auto;
+            padding: var(--line-distance);
+            background-color: transparent;
+            transition: background-color 0.3s ease-in-out;
+            user-select: none;
+            margin: 10px auto;
+        }
+
+        .design-btn-wrapper:has(.design-btn:hover) {
+            animation: backround-color-change calc(var(--animation-speed) * 4) ease-in-out forwards;
+        }
+
+        @keyframes backround-color-change {
+            80% { background-color: transparent; }
+            100% { background-color: rgba(0, 243, 255, 0.1); }
+        }
+
+        .design-btn {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.8rem 1.25rem;
+            background-color: var(--primary);
+            background-image: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.4));
+            border: none;
+            color: #000;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--primary);
+            transition: all 0.2s ease-in-out;
+            clip-path: polygon(10% 0, 100% 0, 100% 80%, 90% 100%, 0 100%, 0 20%); /* Cyber shape */
+        }
+
+        .design-btn:hover {
+            background-color: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .design-btn:active {
+            background-color: var(--primary);
+            transform: scale(0.98);
+        }
+
+        .design-btn-svg {
+            margin-left: 0.5rem;
+            height: 20px;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke: #000;
+            fill: none;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Dots */
+        .design-dot {
+            position: absolute;
+            width: var(--dot-size);
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background-color: var(--dot-color);
+            transition: all 0.3s ease-in-out;
+            opacity: 0;
+            box-shadow: 0 0 5px var(--primary);
+        }
+
+        .design-btn-wrapper:has(.design-btn:hover) .design-dot.top.left {
+            top: 50%; left: 20%;
+            animation: move-top-left var(--animation-speed) ease-in-out forwards;
+        }
+        @keyframes move-top-left {
+            90% { opacity: 0.6; }
+            100% { top: calc(var(--dot-size) * -0.5); left: calc(var(--dot-size) * -0.5); opacity: 1; }
+        }
+
+        .design-btn-wrapper:has(.design-btn:hover) .design-dot.top.right {
+            top: 50%; right: 20%;
+            animation: move-top-right var(--animation-speed) ease-in-out forwards;
+            animation-delay: calc(var(--animation-speed) * 0.6);
+        }
+        @keyframes move-top-right {
+            80% { opacity: 0.6; }
+            100% { top: calc(var(--dot-size) * -0.5); right: calc(var(--dot-size) * -0.5); opacity: 1; }
+        }
+
+        .design-btn-wrapper:has(.design-btn:hover) .design-dot.bottom.right {
+            bottom: 50%; right: 20%;
+            animation: move-bottom-right var(--animation-speed) ease-in-out forwards;
+            animation-delay: calc(var(--animation-speed) * 1.2);
+        }
+        @keyframes move-bottom-right {
+            80% { opacity: 0.6; }
+            100% { bottom: calc(var(--dot-size) * -0.5); right: calc(var(--dot-size) * -0.5); opacity: 1; }
+        }
+
+        .design-btn-wrapper:has(.design-btn:hover) .design-dot.bottom.left {
+            bottom: 50%; left: 20%;
+            animation: move-bottom-left var(--animation-speed) ease-in-out forwards;
+            animation-delay: calc(var(--animation-speed) * 1.8);
+        }
+        @keyframes move-bottom-left {
+            80% { opacity: 0.6; }
+            100% { bottom: calc(var(--dot-size) * -0.5); left: calc(var(--dot-size) * -0.5); opacity: 1; }
+        }
+
+        /* Lines */
+        .design-line {
+            position: absolute;
+            transition: all 0.3s ease-in-out;
+        }
+        .design-line.horizontal {
+            height: var(--line-weight); width: 100%;
+            background-image: repeating-linear-gradient(90deg, transparent 0 calc(var(--line-weight) * 2), var(--line-color) calc(var(--line-weight) * 2) calc(var(--line-weight) * 4));
+        }
+        .design-line.top { top: calc(var(--line-weight) * -0.5); }
+        .design-line.bottom { bottom: calc(var(--line-weight) * -0.5); }
+        .design-line.vertical {
+            width: var(--line-weight); height: 100%;
+            background-image: repeating-linear-gradient(0deg, transparent 0 calc(var(--line-weight) * 2), var(--line-color) calc(var(--line-weight) * 2) calc(var(--line-weight) * 4));
+        }
+        .design-line.left { left: calc(var(--line-weight) * -0.5); }
+        .design-line.right { right: calc(var(--line-weight) * -0.5); }
+
+        .design-line.top { transform-origin: top left; transform: rotate(5deg) scaleX(0); }
+        .design-btn-wrapper:has(.design-btn:hover) .design-line.top {
+            animation: draw-top var(--animation-speed) ease-in-out forwards;
+            animation-delay: calc(var(--animation-speed) * 0.8);
+        }
+        @keyframes draw-top { 100% { transform: rotate(0deg) scaleX(1); } }
+
+        .design-line.bottom { transform-origin: bottom right; transform: rotate(5deg) scaleX(0); }
+        .design-btn-wrapper:has(.design-btn:hover) .design-line.bottom {
+            animation: draw-bottom var(--animation-speed) ease-in-out forwards;
+            animation-delay: calc(var(--animation-speed) * 2);
+        }
+        @keyframes draw-bottom { 100% { transform: rotate(0deg) scaleX(1); } }
+
+        .design-line.left { transform-origin: bottom left; transform: rotate(0deg) scaleY(0); }
+        .design-btn-wrapper:has(.design-btn:hover) .design-line.left {
+            animation: draw-left var(--animation-speed) ease-in-out forwards;
+            animation-delay: calc(var(--animation-speed) * 2.4);
+        }
+        @keyframes draw-left { 100% { transform: rotate(0deg) scaleY(1); } }
+
+        .design-line.right { transform-origin: top right; transform: rotate(5deg) scaleY(0); }
+        .design-btn-wrapper:has(.design-btn:hover) .design-line.right {
+            animation: draw-right var(--animation-speed) ease-in-out forwards;
+            animation-delay: calc(var(--animation-speed) * 1.4);
+        }
+        @keyframes draw-right { 100% { transform: rotate(0deg) scaleY(1); } }
 
     </style>
 </head>
@@ -225,19 +385,42 @@
             
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-black tracking-[0.2em] text-white" style="text-shadow: 0 0 10px var(--primary)">NEURAL_GATE</h1>
-                <p class="text-[10px] opacity-70 mt-2 tracking-[0.3em]">SECURE ACCESS POINT // V9.9</p>
+                <p class="text-[10px] opacity-70 mt-2 tracking-[0.3em]">SECURE ACCESS POINT // V10.0</p>
             </div>
 
-            <!-- BIOMETRIC -->
+            <!-- BIOMETRIC PHASE (ADAPTIVE) -->
             <div id="bio-phase" class="flex flex-col items-center justify-center py-6">
-                <div id="bio-scanner" class="fingerprint-container" onmousedown="startScan()" onmouseup="stopScan()" onmouseleave="stopScan()" ontouchstart="startScan()" ontouchend="stopScan()">
-                    <i class="fas fa-fingerprint fingerprint-icon"></i>
-                    <div class="scan-beam"></div>
+                
+                <!-- 1. FACE SCANNER (Cam Available) -->
+                <div id="face-feed-container">
+                    <video id="webcam-video" autoplay playsinline muted></video>
+                    <!-- HUD Elements -->
+                    <div class="face-hud-corner tl"></div>
+                    <div class="face-hud-corner tr"></div>
+                    <div class="face-hud-corner bl"></div>
+                    <div class="face-hud-corner br"></div>
+                    <div class="face-scan-line"></div>
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 z-20"></div>
                 </div>
-                <p id="bio-text" class="text-xs font-mono animate-pulse" style="color: var(--primary)">HOLD TO SCAN BIOMETRICS</p>
+
+                <!-- 2. FINGERPRINT SCANNER (No Cam/Fallback) -->
+                <div id="fingerprint-wrapper">
+                    <div id="bio-scanner" class="fingerprint-container" onmousedown="startScan()" onmouseup="stopScan()" onmouseleave="stopScan()" ontouchstart="startScan()" ontouchend="stopScan()">
+                        <i class="fas fa-fingerprint fingerprint-icon"></i>
+                        <div class="scan-beam"></div>
+                    </div>
+                </div>
+
+                <p id="bio-text" class="text-xs font-mono animate-pulse mt-4" style="color: var(--primary)">INITIALIZING SENSORS...</p>
+                
                 <div class="w-full h-1 bg-gray-900 mt-4 rounded-full overflow-hidden">
                     <div id="bio-progress" class="h-full w-0 transition-all duration-100 ease-linear" style="background-color: var(--primary)"></div>
                 </div>
+
+                <!-- Manual fallback button if cam fails logic but exists -->
+                <button id="manual-fallback-btn" onclick="forceFingerprintMode()" class="hidden-el mt-4 text-[9px] text-red-400 border border-red-900 px-2 py-1 hover:bg-red-900/20">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> USE MANUAL AUTH
+                </button>
             </div>
 
             <!-- PIN -->
@@ -332,7 +515,7 @@
             </div>
             <div class="window-content bg-black/90 font-mono h-48 flex flex-col" onclick="document.getElementById('term-input').focus()">
                 <div id="term-output" class="flex-1 terminal-text overflow-y-auto mb-2 scrollbar-thin">
-                    <div class="opacity-50">NEURAL_OS [Version 9.9.0]</div>
+                    <div class="opacity-50">NEURAL_OS [Version 10.0]</div>
                     <div class="opacity-50">(c) CyberCorp. All rights reserved.</div><br>
                     <div style="color: var(--primary)">Type 'help' for available commands.</div>
                 </div>
@@ -343,7 +526,7 @@
             </div>
         </div>
 
-        <!-- Win 4: PORTAL DECRYPTER (Formerly Game) -->
+        <!-- Win 4: PORTAL DECRYPTER -->
         <div id="win-game" class="window-panel w-[300px]" style="top: 100px; left: 750px;">
              <div id="win-game-header" class="window-header">
                 <span><i class="fas fa-lock-open mr-2"></i>DECRYPTION_PORTAL</span>
@@ -405,11 +588,43 @@
                 </div>
             </div>
         </div>
+
+        <!-- Win 6: DESIGN LAB (New Button) -->
+        <div id="win-design" class="window-panel w-[280px]" style="top: 250px; left: 450px;">
+            <div id="win-design-header" class="window-header">
+                <span><i class="fas fa-pen-ruler mr-2"></i>PROTO_LAB</span>
+                <div class="flex gap-1"><div class="w-2 h-2 rounded-full bg-yellow-500"></div><div class="w-2 h-2 rounded-full bg-green-500"></div></div>
+            </div>
+            <div class="window-content flex items-center justify-center bg-black/50 p-6">
+                <!-- NEW BUTTON STRUCTURE -->
+                <div class="design-btn-wrapper">
+                    <div class="design-line horizontal top"></div>
+                    <div class="design-line vertical right"></div>
+                    <div class="design-line horizontal bottom"></div>
+                    <div class="design-line vertical left"></div>
+                  
+                    <div class="design-dot top left"></div>
+                    <div class="design-dot top right"></div>
+                    <div class="design-dot bottom right"></div>
+                    <div class="design-dot bottom left"></div>
+                  
+                    <button class="design-btn" onclick="launchDataVault()">
+                      <span class="btn-text">INITIATE</span>
+                      <svg class="design-btn-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.6744 11.4075L15.7691 17.1233C15.7072 17.309 15.5586 17.4529 15.3709 17.5087L3.69348 20.9803C3.22819 21.1186 2.79978 20.676 2.95328 20.2155L6.74467 8.84131C6.79981 8.67588 6.92419 8.54263 7.08543 8.47624L12.472 6.25822C12.696 6.166 12.9535 6.21749 13.1248 6.38876L17.5294 10.7935C17.6901 10.9542 17.7463 11.1919 17.6744 11.4075Z"></path>
+                        <path d="M3.2959 20.6016L9.65986 14.2376"></path>
+                        <path d="M17.7917 11.0557L20.6202 8.22724C21.4012 7.44619 21.4012 6.17986 20.6202 5.39881L18.4989 3.27749C17.7178 2.49645 16.4515 2.49645 15.6704 3.27749L12.842 6.10592"></path>
+                        <path d="M11.7814 12.1163C11.1956 11.5305 10.2458 11.5305 9.66004 12.1163C9.07426 12.7021 9.07426 13.6519 9.66004 14.2376C10.2458 14.8234 11.1956 14.8234 11.7814 14.2376C12.3671 13.6519 12.3671 12.7021 11.7814 12.1163Z"></path>
+                      </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- BROWSER STAGE (Converted to Window) -->
-    <div id="browser-stage" class="hidden-el window-panel z-50 flex flex-col transition-opacity duration-300" style="width: 100%; height: 100%; top: 0; left: 0; border: none;">
-        <div id="browser-stage-header" class="window-header h-14 border-b border-[#00f3ff] bg-black/90 flex items-center px-4 gap-4 shadow-[0_0_20px_rgba(0,243,255,0.1)]">
+    <!-- BROWSER STAGE -->
+    <div id="browser-stage" class="hidden-el window-panel flex flex-col transition-opacity duration-300" style="position: fixed; width: 100%; height: 100%; top: 0; left: 0; border: none; z-index: 10000;">
+        <div id="browser-stage-header" class="window-header h-14 border-b border-[#00f3ff] bg-black/90 flex items-center px-4 gap-4 shadow-[0_0_20px_rgba(0,243,255,0.1)] relative z-20">
             <button onclick="closeBrowser()" class="cyber-btn h-8 w-8 flex items-center justify-center rounded hover:bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff]">
                 <i class="fas fa-arrow-left"></i>
             </button>
@@ -419,11 +634,24 @@
             </div>
             <div class="flex gap-2"><div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div></div>
         </div>
-        <iframe id="browser-frame" class="flex-1 w-full h-full border-none bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        
+        <!-- Browser Content Container -->
+        <div class="flex-1 w-full h-full relative bg-white">
+            <!-- Loader behind iframe -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-[#00f3ff] z-0">
+                <i class="fas fa-circle-notch fa-spin text-4xl mb-4"></i>
+                <span class="font-mono text-xs tracking-widest">ESTABLISHING SECURE CONNECTION...</span>
+            </div>
+            
+            <iframe id="browser-frame" class="w-full h-full border-none relative z-10" 
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox allow-presentation"
+                    referrerpolicy="no-referrer"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+            </iframe>
+        </div>
     </div>
 
-    <!-- CONFIG MODAL (New Password & Exit) -->
-    <!-- Removed hidden-el by default in HTML, managed by JS to allow transitions, but initial state is opacity 0 via CSS -->
+    <!-- CONFIG MODAL -->
     <div id="password-modal" class="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-center justify-center hidden-el">
         <div class="window-panel w-[350px] border border-[var(--primary)] shadow-[0_0_50px_rgba(0,243,255,0.2)] bg-black">
             <div class="window-header">
@@ -452,8 +680,6 @@
                     <button onclick="saveConfig()" class="flex-1 cyber-btn py-3 text-xs font-bold hover:bg-[var(--primary)] hover:text-black transition-all">SAVE CHANGES</button>
                     <button onclick="closeConfigModal()" class="flex-1 border border-red-500 text-red-500 hover:bg-red-900/30 py-3 text-xs font-bold transition-all">EXIT & LOCK</button>
                 </div>
-                
-                <p class="text-[9px] text-center text-gray-600 mt-2">*Exiting will purge the config payload from memory.</p>
             </div>
         </div>
     </div>
@@ -462,7 +688,7 @@
         // --- GLOBALS ---
         let systemPin = "340";
         let portalPin = "999";
-        const apiKey = ""; // API key is handled by the environment
+        const apiKey = ""; // API Key removed for security
         
         let files = [
             { icon: 'fa-file-pdf', color: 'text-red-400', name: 'PLANS_V2.pdf' },
@@ -513,7 +739,7 @@
         function playSuccess() { playBeep(1200, 'sine', 0.1); setTimeout(() => playBeep(1800, 'square', 0.2), 100); }
 
         // --- BOOT ---
-        const bootLines = ["NEURAL BIOS v9.9 - (c) 2099 CyberCorp", "Checking Memory... OK", "Loading Kernel... OK", "Mounting /dev/brain0... OK", "Connecting to Neural Net...", "Established.", "Booting System..."];
+        const bootLines = ["NEURAL BIOS v10.0 - (c) 2100 CyberCorp", "Checking Hardware... OK", "Loading Kernel... OK", "Mounting /dev/brain0... OK", "Scanning Peripherals...", "Booting System..."];
         async function runBoot() {
             const screen = document.getElementById('boot-screen');
             for(let line of bootLines) {
@@ -523,9 +749,89 @@
             }
             await new Promise(r => setTimeout(r, 600));
             screen.style.opacity = '0';
-            setTimeout(() => { screen.classList.add('hidden-el'); document.getElementById('login-stage').classList.remove('hidden-el'); }, 500);
+            setTimeout(() => { 
+                screen.classList.add('hidden-el'); 
+                document.getElementById('login-stage').classList.remove('hidden-el');
+                initAdaptiveAuth(); // TRIGGER ADAPTIVE AUTH CHECK
+            }, 500);
         }
         window.onload = runBoot;
+
+        // --- ADAPTIVE AUTH (NEW FEATURE) ---
+        let webcamStream = null;
+        
+        async function initAdaptiveAuth() {
+            const bioText = document.getElementById('bio-text');
+            const bioWrapper = document.getElementById('fingerprint-wrapper');
+            const faceContainer = document.getElementById('face-feed-container');
+
+            bioText.innerText = "CHECKING CAMERA HARDWARE...";
+            
+            try {
+                // Try to get camera
+                webcamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                
+                // --- SUCCESS: CAMERA FOUND ---
+                const videoEl = document.getElementById('webcam-video');
+                videoEl.srcObject = webcamStream;
+                
+                // Swap UI
+                bioWrapper.classList.add('hidden-el');
+                faceContainer.style.display = 'block'; // Show face container
+                bioText.innerText = "FACE ID: ANALYZING...";
+                bioText.classList.remove('animate-pulse');
+                
+                // Trigger auto-scan
+                startFaceScanLogic();
+
+            } catch (err) {
+                // --- FAIL: NO CAMERA / DENIED ---
+                console.log("Camera fail or denied, fallback to fingerprint", err);
+                forceFingerprintMode();
+            }
+        }
+
+        function forceFingerprintMode() {
+            // Stop stream if it exists
+            if(webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('face-feed-container').style.display = 'none';
+            document.getElementById('fingerprint-wrapper').classList.remove('hidden-el');
+            document.getElementById('manual-fallback-btn').classList.add('hidden-el');
+            
+            const bioText = document.getElementById('bio-text');
+            bioText.innerText = "HOLD TO SCAN BIOMETRICS";
+            bioText.classList.add('animate-pulse');
+        }
+
+        function startFaceScanLogic() {
+            const bioProgress = document.getElementById('bio-progress');
+            const bioText = document.getElementById('bio-text');
+            let progress = 0;
+            
+            playBeep(400, 'square', 0.2); // Init sound
+
+            // Simulate analysis time
+            const faceInterval = setInterval(() => {
+                progress += 1;
+                bioProgress.style.width = progress + '%';
+                
+                if(progress % 20 === 0) playBeep(1000 + progress*5, 'sine', 0.05);
+
+                if (progress >= 100) {
+                    clearInterval(faceInterval);
+                    bioText.innerText = "IDENTITY VERIFIED";
+                    bioText.style.color = "#0f0";
+                    playSuccess();
+                    
+                    setTimeout(() => {
+                        completeScan(); // Reuse original success logic
+                    }, 800);
+                }
+            }, 30); // 3 seconds approx
+        }
+
 
         // --- MATRIX ---
         const canvas = document.getElementById('matrix-canvas'), ctx = canvas.getContext('2d');
@@ -548,10 +854,11 @@
         }
         setInterval(drawMatrix, 50);
 
-        // --- BIOMETRIC ---
+        // --- FINGERPRINT (FALLBACK LOGIC) ---
         let scanInterval, progress = 0;
         const bioScanner = document.getElementById('bio-scanner'), bioProgress = document.getElementById('bio-progress'), bioText = document.getElementById('bio-text');
         const bioPhase = document.getElementById('bio-phase'), pinPhase = document.getElementById('pin-phase');
+        
         function startScan() {
             bioScanner.classList.add('scanning'); playBeep(200, 'sine', 2);
             bioText.innerText = "SCANNING..."; bioText.classList.remove('animate-pulse');
@@ -568,7 +875,14 @@
             }
         }
         function completeScan() {
-            playSuccess(); bioText.innerText = "IDENTITY VERIFIED";
+            // Stop Webcam if running (Face Scan Success uses this too)
+             if(webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+            }
+
+            playSuccess(); 
+            // Reuse bioText just in case called from fingerprint
+            document.getElementById('bio-text').innerText = "IDENTITY VERIFIED";
             setTimeout(() => { bioPhase.classList.add('hidden-el'); pinPhase.classList.remove('hidden-el'); }, 800);
         }
 
@@ -600,9 +914,21 @@
         // --- BROWSER ---
         function openBrowser(url) {
             const browser = document.getElementById('browser-stage'), frame = document.getElementById('browser-frame');
-            frame.src = url; browser.classList.remove('hidden-el');
-            browser.style.opacity = '0'; browser.style.transform = 'scale(0.95)';
-            requestAnimationFrame(() => { browser.style.transition = 'all 0.3s ease-out'; browser.style.opacity = '1'; browser.style.transform = 'scale(1)'; });
+            
+            // Set source
+            frame.src = url; 
+            
+            // Visual transition
+            browser.classList.remove('hidden-el');
+            browser.style.opacity = '0'; 
+            browser.style.transform = 'scale(0.95)';
+            
+            // Force reflow
+            void browser.offsetWidth;
+            
+            browser.style.transition = 'all 0.3s ease-out'; 
+            browser.style.opacity = '1'; 
+            browser.style.transform = 'scale(1)';
         }
         function closeBrowser() {
             const browser = document.getElementById('browser-stage'), frame = document.getElementById('browser-frame');
@@ -610,7 +936,6 @@
             setTimeout(() => { 
                 browser.classList.add('hidden-el'); 
                 frame.src = ''; 
-                // Restore Decryption window when browser closes
                 document.getElementById('win-game').classList.remove('hidden-el');
             }, 300);
         }
@@ -650,8 +975,34 @@
                 container.appendChild(div);
             });
         }
+        
+        function launchDataVault() {
+            playBeep(1000, 'square', 0.1);
+            const win = document.getElementById('win-files');
+            
+            // Bring to front
+            document.querySelectorAll('.window-panel').forEach(w => w.style.zIndex = 10);
+            win.style.zIndex = 50;
+        
+            // Visual flash
+            const originalBorder = win.style.borderColor;
+            win.style.borderColor = "#fff";
+            win.style.boxShadow = "0 0 30px var(--primary)";
+            
+            setTimeout(() => {
+                win.style.borderColor = "var(--primary)";
+                win.style.boxShadow = "";
+            }, 300);
+        
+            // Re-render to simulate "Initiating"
+            const grid = document.getElementById('file-grid');
+            grid.innerHTML = '<div class="col-span-3 text-center text-xs animate-pulse">ACCESSING...</div>';
+            setTimeout(renderFiles, 500);
+            
+            printToTerm("> PROTO_LAB: DATA_VAULT SYNC INITIATED.", "text-yellow-400");
+        }
 
-        // --- DECRYPTION PORTAL LOGIC (Revised) ---
+        // --- DECRYPTION PORTAL LOGIC ---
         let portalScanInterval;
         let portalProgress = 0;
 
@@ -663,7 +1014,6 @@
             const msg = document.getElementById('portal-msg');
 
             if (val === portalPin) {
-                // Valid: Transition to Phase 2 (Biometric)
                 msg.style.opacity = '0';
                 phase1.style.opacity = '0';
                 phase1.style.pointerEvents = 'none';
@@ -673,12 +1023,10 @@
                 setTimeout(() => {
                     phase1.classList.add('hidden-el');
                     phase2.classList.remove('hidden-el');
-                    // Force reflow
                     void phase2.offsetWidth; 
                     phase2.style.opacity = '1';
                 }, 300);
             } else {
-                // Invalid
                 playError();
                 msg.style.opacity = '1';
                 input.value = "";
@@ -732,7 +1080,6 @@
             status.innerText = "IDENTITY CONFIRMED.";
             status.style.color = "#0f0";
             
-            // Reveal Payload
             setTimeout(() => {
                 if(!files.find(f => f.name === 'SECRET_PAYLOAD.script')) {
                     files.push({ icon: 'fa-file-code', color: 'text-red-500', name: 'SECRET_PAYLOAD.script' });
@@ -742,7 +1089,7 @@
             }, 500);
         }
 
-        // --- CONFIG MODAL LOGIC (New) ---
+        // --- CONFIG MODAL LOGIC ---
         function openConfigModal() {
             document.getElementById('win-game').classList.add('hidden-el');
             const modal = document.getElementById('password-modal');
@@ -752,9 +1099,7 @@
             pinIn.value = systemPin;
             portIn.value = portalPin;
             
-            // Smooth Open
             modal.classList.remove('hidden-el');
-            // Force reflow
             void modal.offsetWidth;
             modal.classList.add('modal-visible');
         }
@@ -770,7 +1115,7 @@
 
             if(newPin.length > 0 && newPin.length <= 4 && !isNaN(newPin)) {
                 systemPin = newPin;
-                document.getElementById('pin-hint').innerText = "HINT: " + systemPin; // Update hint
+                document.getElementById('pin-hint').innerText = "HINT: " + systemPin; 
                 changed = true;
             }
             
@@ -782,8 +1127,6 @@
             if(changed) {
                 playSuccess();
                 printToTerm("> CONFIG UPDATE: CREDENTIALS MODIFIED.", "text-yellow-400");
-                
-                // Show visual feedback
                 const btn = event.target;
                 const oldText = btn.innerText;
                 btn.innerText = "SAVED!";
@@ -797,14 +1140,10 @@
             const modal = document.getElementById('password-modal');
             modal.classList.remove('modal-visible');
 
-            // Wait for animation to finish before hiding display
             setTimeout(() => {
                 modal.classList.add('hidden-el');
-                
                 const gameWin = document.getElementById('win-game');
                 gameWin.classList.remove('hidden-el');
-                
-                // Logic: Hide secret file & RESET PORTAL
                 playBeep(600, 'sawtooth', 0.2);
                 files = files.filter(f => f.name !== 'SECRET_PAYLOAD.script');
                 renderFiles();
@@ -816,24 +1155,21 @@
                 const bioBar = document.getElementById('portal-bio-progress');
                 const bioStatus = document.getElementById('portal-status');
                 
-                // Hide Phase 2
                 phase2.style.opacity = '0';
                 phase2.classList.add('hidden-el');
                 
-                // Show Phase 1
                 phase1.classList.remove('hidden-el');
                 phase1.style.pointerEvents = 'auto';
-                void phase1.offsetWidth; // Force Reflow
+                void phase1.offsetWidth; 
                 phase1.style.opacity = '1';
                 
-                // Clear Values
                 input.value = "";
                 portalProgress = 0;
                 bioBar.style.width = '0%';
                 bioStatus.innerText = "";
                 
                 printToTerm("> SECURE SESSION CLOSED. TEMP FILES REMOVED.");
-            }, 300); // Matches CSS transition duration
+            }, 300);
         }
 
         // --- DRAG, TERM, CLOCK ---
@@ -852,7 +1188,7 @@
         makeDraggable(document.getElementById("win-sys")); makeDraggable(document.getElementById("win-files"));
         makeDraggable(document.getElementById("win-term")); makeDraggable(document.getElementById("win-game"));
         makeDraggable(document.getElementById("win-ai"));
-        // browser-stage dragging disabled for full screen experience
+        makeDraggable(document.getElementById("win-design"));
 
         const termInput = document.getElementById('term-input'), termOutput = document.getElementById('term-output');
         termInput.addEventListener('keydown', function(e) {
@@ -898,11 +1234,9 @@
             
             if (!text) return;
             
-            // Add user message
             addMessageToChat('USER', text);
             input.value = '';
             
-            // Add loading indicator
             const loadingId = 'loading-' + Date.now();
             const loadingDiv = document.createElement('div');
             loadingDiv.id = loadingId;
@@ -928,8 +1262,31 @@
             let typeClass = 'msg-ai';
             if (sender === 'USER') typeClass = 'msg-user';
             
-            div.className = `msg-bubble ${typeClass} status-animate`;
-            div.innerText = text; // Safe text
+            div.className = `msg-bubble ${typeClass} status-animate relative group`;
+            div.innerText = text; 
+            
+            if (sender === 'AI') {
+                div.style.cursor = 'pointer';
+                div.title = "Click to Copy";
+                div.classList.add('hover:brightness-125');
+                div.onclick = function() {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        printToTerm("> COPIED TO CLIPBOARD", "text-green-500");
+                        playBeep(1200, 'sine', 0.1);
+                        const originalBg = div.style.backgroundColor;
+                        div.style.backgroundColor = 'rgba(0, 243, 255, 0.3)';
+                        setTimeout(() => div.style.backgroundColor = originalBg, 200);
+                    } catch (err) {
+                        console.error('Copy failed', err);
+                    }
+                    document.body.removeChild(textarea);
+                };
+            }
             
             display.appendChild(div);
             display.scrollTop = display.scrollHeight;
@@ -939,8 +1296,6 @@
         async function generateGeminiContent(prompt) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
-            
-            // Exponential backoff retry logic
             const delays = [1000, 2000, 4000, 8000, 16000];
             
             for (let i = 0; i < 5; i++) {
@@ -950,12 +1305,9 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                    
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    
                     const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "NO DATA RECEIVED.";
-                    
+                    return data.candidates?.[0]?.content?.[0]?.parts?.[0]?.text || "NO DATA RECEIVED.";
                 } catch (e) {
                     if (i === 4) throw e;
                     await new Promise(resolve => setTimeout(resolve, delays[i]));
